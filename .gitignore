@@ -1,0 +1,42 @@
+# IDE files
+.vscode/
+.idea/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.c
+
+# Build artifacts
+build/
+dist/
+*egg-info*/
+_build/
+.venv/
+target/
+
+# History
+# We really don't want these in here, they blow up the size of the repository a lot.
+.ipynb_checkpoints/
+.Trash-0
+
+# Pytest results
+result.xml
+cargo_result.xml
+prof/
+logs/
+
+# Experiments
+temp_*
+tmp*
+#Coverage
+.coverage.*
+.coverage
+coverage.xml
+
+# Environment
+.env
+site
+ENV_DIR
