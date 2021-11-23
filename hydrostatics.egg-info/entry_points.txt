@@ -1,0 +1,3 @@
+[console_scripts]
+hydro = hydrostatics.gui:hydro
+
