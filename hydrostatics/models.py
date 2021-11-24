@@ -525,7 +525,9 @@ class BuoyancyModel:
                 self.R
                 @ np.array([0.0, 0.0, self.water_density * self.g * overall_volume])
             )
-            moment = np.cross(correction * (overall_centroid - self.body_origin) / 1000, force)
+            moment = np.cross(
+                correction * (overall_centroid - self.body_origin) / 1000, force
+            )
 
             return force, moment
 
@@ -1132,6 +1134,73 @@ class BuoyancyModel:
 
             def __init__(self):
                 self.reset()
+
+            def dict(self):
+                return {
+                    "volume_error": self.volume_error,
+                    "heel": self.heel,
+                    "trim": self.trim,
+                    "fx": self.force[0],
+                    "fy": self.force[1],
+                    "fz": self.force[2],
+                    "mx": self.moment[0],
+                    "my": self.moment[1],
+                    "mz": self.moment[2],
+                    "fx_earth": self.force_earth[0],
+                    "fy_earth": self.force_earth[1],
+                    "fz_earth": self.force_earth[2],
+                    "mx_earth": self.moment_earth[0],
+                    "my_earth": self.moment_earth[1],
+                    "mz_earth": self.moment_earth[2],
+                    "fx_weight": self.weight_force[0],
+                    "fy_weight": self.weight_force[1],
+                    "fz_weight": self.weight_force[2],
+                    "mx_weight": self.weight_moment[0],
+                    "my_weight": self.weight_moment[1],
+                    "mz_weight": self.weight_moment[2],
+                    "cogx": self.centre_of_gravity[0],
+                    "cogy": self.centre_of_gravity[1],
+                    "cogz": self.centre_of_gravity[2],
+                    "volume": self.volume,
+                    "volume_centroid_x": self.volume_centroid[0],
+                    "volume_centroid_y": self.volume_centroid[1],
+                    "volume_centroid_z": self.volume_centroid[2],
+                    "fx_buoyancy": self.buoyancy_force[0],
+                    "fy_buoyancy": self.buoyancy_force[1],
+                    "fz_buoyancy": self.buoyancy_force[2],
+                    "mx_buoyancy": self.buoyancy_moment[0],
+                    "my_buoyancy": self.buoyancy_moment[1],
+                    "mz_buoyancy": self.buoyancy_moment[2],
+                    "wetted_surface_area": self.wetted_surface_area,
+                    "waterplane_area": self.waterplane_area,
+                    "center_of_flotation_x": self.centre_of_flotation[0],
+                    "center_of_flotation_y": self.centre_of_flotation[1],
+                    "center_of_flotation_z": self.centre_of_flotation[2],
+                    "Ax": self.Ax,
+                    "Ay": self.Ay,
+                    "Ax_origin": self.Ax_origin,
+                    "Ay_origin": self.Ay_origin,
+                    "Ixx": self.Ixx,
+                    "Iyy": self.Iyy,
+                    "Ixy": self.Ixy,
+                    "Ixx_origin": self.Ixx_origin,
+                    "Iyy_origin": self.Iyy_origin,
+                    "Ixy_origin": self.Ixy_origin,
+                    "Iu": self.Iu,
+                    "Iv": self.Iv,
+                    "theta_principle": self.theta_principle,
+                    "BMt": self.BMt,
+                    "BMl": self.BMl,
+                    "GMt": self.GMt,
+                    "GMl": self.GMl,
+                    "state": self.state,
+                    "Lwl": self.Lwl,
+                    "Bwl": self.Bwl,
+                    "Cwp": self.Cwp,
+                    "depth": self.depth,
+                    "GZ_l": self.GZ_l,
+                    "GZ_t": self.GZ_t,
+                }
 
             def reset(self):
                 """Clears results and restores default values"""

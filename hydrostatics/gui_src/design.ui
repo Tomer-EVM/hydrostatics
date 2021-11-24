@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1175</width>
-    <height>670</height>
+    <width>1404</width>
+    <height>771</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -689,7 +689,7 @@
     <item row="0" column="2" rowspan="3">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="viewerTab">
        <attribute name="title">
@@ -788,8 +788,8 @@
          </widget>
         </item>
         <item row="0" column="0" colspan="2">
-         <widget class="QWebEngineView" name="resultsOutput">
-          <property name="url">
+         <widget class="QWebEngineView" name="resultsOutput" native="true">
+          <property name="url" stdset="0">
            <url>
             <string>about:blank</string>
            </url>
@@ -797,6 +797,11 @@
          </widget>
         </item>
        </layout>
+      </widget>
+      <widget class="QWidget" name="grid_analysis">
+       <attribute name="title">
+        <string>Analysis</string>
+       </attribute>
       </widget>
      </widget>
     </item>
@@ -1337,7 +1342,7 @@
         <width>800</width>
         <height>0</height>
        </size>
-      </property>>
+      </property>
       <property name="lineWrapMode">
        <enum>QPlainTextEdit::NoWrap</enum>
       </property>
@@ -1353,8 +1358,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1175</width>
-     <height>21</height>
+     <width>1404</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

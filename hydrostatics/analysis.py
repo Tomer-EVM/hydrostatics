@@ -1,7 +1,7 @@
 # print("Started")
 from hydrostatics.mesh_processing import close_ends, mirror_uv
 from hydrostatics.models import BuoyancyModel
-from hydrostatics.optimize import iterative
+from hydrostatics.optimize import iterative, iterative_multidimensional
 import numpy as np
 from copy import copy
 
@@ -25,17 +25,7 @@ def get_centroid(model):
     return model.results.volume_centroid
 
 
-def sink(model):
-    """Moves the boat to force equilibrium, ignoring moments
-
-    Parameters
-    ----------
-    model : BuoyancyModel
-    """
-    iterative(model, selected=(False, False, True), max_iter=100, max_time=10)
-
-
-def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=(20, 20)):
+def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=20):
     """Produces a grid of results for every trim and heel value
 
     Sinks the boat to force equilibrium at each iteration
@@ -58,38 +48,47 @@ def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=(20, 20)):
         A meshgrid for the heel and trim values
     """
     c = get_centroid(model)
-    results_grid = []
-    for h in np.linspace(heel[0], heel[1], resolution[0]):
-        results_grid.append([])
-        for t in np.linspace(trim[0], trim[1], resolution[1]):
+    results: list[dict] = []
+    for h in np.linspace(heel[0], heel[1], resolution):
+        for t in np.linspace(trim[0], trim[1], resolution):
             model.heel = h
             model.trim = t
             model.waterplane_origin = c
             model.calculate_results()
-            sink(model)
-            print(model.results.force_earth[2])
-            # model.calculate_results()
-            results_grid[-1].append(copy(model.results))
+            iterative_multidimensional(
+                model, selected=(False, False, True), max_iter=100, max_time=10
+            )
+            results.append(model.results.dict())
 
-    return results_grid, np.meshgrid(
-        np.linspace(heel[0], heel[1], resolution[0]),
-        np.linspace(trim[0], trim[1], resolution[1]),
-    )
+    return results
 
 
-if __name__ == "__main__":
-    b = BuoyancyModel()
-    b.set_weight_force("hull", np.array([5882.4, 590, 2247.4]), 2979 * 9.81)
-    b.load_mesh("data/hydrostatics_data/F50HullSTB.dxf")
-    b.meshes["F50HullSTB.dxf_0"] = close_ends(mirror_uv(b.meshes["F50HullSTB.dxf_0"]))
-    b.calculate_transformation()
-    b.calculate_results()
+def analyse_trim(model: BuoyancyModel, trim=(-180, 180), resolution=20):
+    c = get_centroid(model)
+    results: list[dict] = []
+    angles: list[float] = []
+    for t in np.linspace(trim[0], trim[1], resolution):
+        model.trim = t
+        model.waterplane_origin = c
+        model.calculate_results()
+        iterative_multidimensional(
+            model, selected=(True, False, True), max_iter=1000, max_time=10
+        )
+        results.append(model.results.dict())
 
-    res, values = grid(b)
+    return results
 
-    import matplotlib.pylab as plt
 
-    a = np.array([[r.moment_earth[0] for r in l] for l in res], dtype=int)
-    b = np.array([[r.moment_earth[1] for r in l] for l in res], dtype=int)
-    plt.quiver(values[0], values[1], a, b)
-    plt.show()
+def analyse_heel(model: BuoyancyModel, heel=(-180, 180), resolution=20):
+    c = get_centroid(model)
+    results: list[dict] = []
+    for h in np.linspace(heel[0], heel[1], resolution):
+        model.heel = h
+        model.waterplane_origin = c
+        model.calculate_results()
+        iterative_multidimensional(
+            model, selected=(False, True, True), max_iter=1000, max_time=10
+        )
+        results.append(model.results.dict())
+
+    return results

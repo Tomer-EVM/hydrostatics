@@ -1,26 +1,35 @@
+import base64
+import datetime
+import io
 import logging
-import sys
 import os.path
+import sys
 from queue import Queue
 from time import sleep
 
-from PIL import Image
-import base64
-import io
-from PyQt5.QtWidgets import QWidget
 import markdown
-import datetime
-
 import numpy as np
-
-from hydrostatics.optimize import solvers
-from hydrostatics.models import BuoyancyModel, load_hydro
-from hydrostatics.mesh_processing import save_uv, mirror_uv, close_ends, Mesh
-from pyvistaqt import QtInteractor
-
-
 import PyQt5
-from PyQt5 import Qt, uic, QtCore
+from matplotlib.backends.backend_qtagg import FigureCanvas
+from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
+from PIL import Image
+from PyQt5 import Qt, QtCore, uic
+from PyQt5.QtWidgets import (
+    QComboBox,
+    QErrorMessage,
+    QHBoxLayout,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
+)
+from pyvistaqt import QtInteractor
+from hydrostatics.analysis import analyse_heel, analyse_trim, grid
+import pandas as pd
+from hydrostatics.mesh_processing import Mesh, close_ends, mirror_uv, save_uv
+from hydrostatics.models import BuoyancyModel, load_hydro
+from hydrostatics.optimize import solvers
 
 logging.basicConfig(level="DEBUG")
 
@@ -129,6 +138,129 @@ class MainWindow(Qt.QMainWindow):
                 )
             )
         )
+        self.setup_analysis()
+
+    def setup_analysis(self):
+        g: QWidget = self.ui.grid_analysis
+        layout = QVBoxLayout(g)
+        self.figure = Figure()
+        self.figure.tight_layout()
+        self.canvas = FigureCanvas(self.figure)
+        self.toolbar = NavigationToolbar(self.canvas, self)
+
+        layout.addWidget(self.toolbar)
+        layout.addWidget(self.canvas)
+
+        buttons = QWidget(g)
+        QHBoxLayout(buttons)
+        self.analysis_resolution = QSpinBox()
+        self.analysis_resolution.setMinimum(2)
+        self.analysis_resolution.setMaximum(1000)
+        self.analysis_column = QComboBox()
+        heel = QPushButton("Heel")
+        trim = QPushButton("Trim")
+        grid = QPushButton("Grid")
+        download = QPushButton("CSV")
+        buttons.layout().addWidget(self.analysis_resolution)
+        buttons.layout().addWidget(self.analysis_column)
+        buttons.layout().addWidget(heel)
+        buttons.layout().addWidget(trim)
+        buttons.layout().addWidget(grid)
+        buttons.layout().addWidget(download)
+        heel.clicked.connect(self.analysis_heel)
+        trim.clicked.connect(self.analysis_trim)
+        grid.clicked.connect(self.analysis_grid)
+        download.clicked.connect(self.csv)
+        self.analysis_column.currentIndexChanged.connect(self.plot_analysis)
+
+        layout.addWidget(buttons)
+        self._analysis_data = None
+        self.x_data = None
+
+    def analysis_trim(self):
+        self._analysis_data = None
+        self.w = Worker(
+            analyse_trim,
+            self.hydro,
+            (self.ui.trimLB.value(), self.ui.trimUB.value()),
+            self.analysis_resolution.value(),
+        )
+        self.w.signals.result.connect(self.finished_analysis)
+        self.thread_pool.start(self.w)
+        self.x_data = "trim"
+
+    def analysis_heel(self):
+        self._analysis_data = None
+        self.w = Worker(
+            analyse_heel,
+            self.hydro,
+            (self.ui.heelLB.value(), self.ui.heelUB.value()),
+            self.analysis_resolution.value(),
+        )
+        self.w.signals.result.connect(self.finished_analysis)
+        self.thread_pool.start(self.w)
+        self.x_data = "heel"
+
+    def analysis_grid(self):
+        self._analysis_data = None
+        self.w = Worker(
+            grid,
+            self.hydro,
+            (self.ui.heelLB.value(), self.ui.heelUB.value()),
+            (self.ui.trimLB.value(), self.ui.trimUB.value()),
+            self.analysis_resolution.value(),
+        )
+        self.w.signals.result.connect(self.finished_analysis)
+        self.thread_pool.start(self.w)
+        self.x_data = ("heel", "trim")
+
+    def csv(self):
+        logging.info("saving csv data")
+        if self._analysis_data is None:
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage("Run an analysis before saving results")
+            error_dialog.show()
+            error_dialog.exec_()
+        else:
+            name = Qt.QFileDialog.getSaveFileName(self, "Save CSV", filter="(*.csv)")
+            if name[0]:
+                with open(name[0], "w") as f:
+                    output = self._analysis_data.to_csv()
+                    f.write(output)
+
+    def finished_analysis(self, results: list[dict]):
+        names = list(results[0].keys())
+        data = {n: [r[n] for r in results] for n in names}
+        self._analysis_data = pd.DataFrame(data=data)
+        self.analysis_column.clear()
+        self.analysis_column.addItems(self._analysis_data.columns.values.tolist())
+        self.plot_analysis()
+
+    def plot_analysis(self):
+        if (
+            self._analysis_data is not None
+            and self.analysis_column.currentText() != ""
+            and self.x_data is not None
+        ):
+            self.figure.clear()
+            if isinstance(self.x_data, str):
+                x = self._analysis_data[self.x_data]
+                y = self._analysis_data[self.analysis_column.currentText()]
+                ax = self.figure.add_subplot(111)
+                ax.plot(x, y)
+                ax.set_xlabel(self.x_data)
+                ax.set_ylabel(self.analysis_column.currentText())
+                self.canvas.draw()
+            else:
+                x = self._analysis_data[self.x_data[0]]
+                y = self._analysis_data[self.x_data[1]]
+                z = self._analysis_data[self.analysis_column.currentText()]
+                ax = self.figure.add_subplot(projection="3d")
+                ax.set_xlabel(self.x_data[0])
+                ax.set_ylabel(self.x_data[1])
+                ax.set_zlabel(self.analysis_column.currentText())
+                ax.scatter(x, y, z)
+                self.canvas.draw()
 
     def setupVtkWindow(self):
         logging.info("Init VTK")
