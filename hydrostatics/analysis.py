@@ -55,9 +55,7 @@ def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=20):
             model.trim = t
             model.waterplane_origin = c
             model.calculate_results()
-            iterative_multidimensional(
-                model, selected=(False, False, True), max_iter=100, max_time=10
-            )
+            iterative(model, selected=(False, False, True), max_iter=1000, max_time=10)
             results.append(model.results.dict())
 
     return results
@@ -66,14 +64,11 @@ def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=20):
 def analyse_trim(model: BuoyancyModel, trim=(-180, 180), resolution=20):
     c = get_centroid(model)
     results: list[dict] = []
-    angles: list[float] = []
     for t in np.linspace(trim[0], trim[1], resolution):
         model.trim = t
         model.waterplane_origin = c
         model.calculate_results()
-        iterative_multidimensional(
-            model, selected=(True, False, True), max_iter=1000, max_time=10
-        )
+        iterative(model, selected=(True, False, True), max_iter=1000, max_time=10)
         results.append(model.results.dict())
 
     return results
@@ -86,9 +81,7 @@ def analyse_heel(model: BuoyancyModel, heel=(-180, 180), resolution=20):
         model.heel = h
         model.waterplane_origin = c
         model.calculate_results()
-        iterative_multidimensional(
-            model, selected=(False, True, True), max_iter=1000, max_time=10
-        )
+        iterative(model, selected=(False, True, True), max_iter=1000, max_time=10)
         results.append(model.results.dict())
 
     return results
