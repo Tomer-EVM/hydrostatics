@@ -1,4 +1,5 @@
 # print("Started")
+from typing import List
 from hydrostatics.mesh_processing import close_ends, mirror_uv
 from hydrostatics.models import BuoyancyModel
 from hydrostatics.optimize import iterative, iterative_multidimensional
@@ -48,7 +49,7 @@ def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=20):
         A meshgrid for the heel and trim values
     """
     c = get_centroid(model)
-    results: list[dict] = []
+    results: List[dict] = []
     for h in np.linspace(heel[0], heel[1], resolution):
         for t in np.linspace(trim[0], trim[1], resolution):
             model.heel = h
@@ -63,7 +64,7 @@ def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=20):
 
 def analyse_trim(model: BuoyancyModel, trim=(-180, 180), resolution=20):
     c = get_centroid(model)
-    results: list[dict] = []
+    results: List[dict] = []
     for t in np.linspace(trim[0], trim[1], resolution):
         model.trim = t
         model.waterplane_origin = c
@@ -76,7 +77,7 @@ def analyse_trim(model: BuoyancyModel, trim=(-180, 180), resolution=20):
 
 def analyse_heel(model: BuoyancyModel, heel=(-180, 180), resolution=20):
     c = get_centroid(model)
-    results: list[dict] = []
+    results: List[dict] = []
     for h in np.linspace(heel[0], heel[1], resolution):
         model.heel = h
         model.waterplane_origin = c

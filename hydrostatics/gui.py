@@ -6,6 +6,7 @@ import os.path
 import sys
 from queue import Queue
 from time import sleep
+from typing import List
 
 import markdown
 import numpy as np
@@ -228,7 +229,7 @@ class MainWindow(Qt.QMainWindow):
                     output = self._analysis_data.to_csv()
                     f.write(output)
 
-    def finished_analysis(self, results: list[dict]):
+    def finished_analysis(self, results: List[dict]):
         names = list(results[0].keys())
         data = {n: [r[n] for r in results] for n in names}
         self._analysis_data = pd.DataFrame(data=data)
