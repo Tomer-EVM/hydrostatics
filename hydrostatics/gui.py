@@ -26,7 +26,13 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 from pyvistaqt import QtInteractor
-from hydrostatics.analysis import analyse_heel, analyse_trim, grid
+from hydrostatics.analysis import (
+    analyse_heel,
+    analyse_heel_fixed_trim,
+    analyse_trim,
+    analyse_trim_fixed_heel,
+    grid,
+)
 import pandas as pd
 from hydrostatics.mesh_processing import Mesh, close_ends, mirror_uv, save_uv
 from hydrostatics.models import BuoyancyModel, load_hydro
@@ -145,7 +151,6 @@ class MainWindow(Qt.QMainWindow):
         g: QWidget = self.ui.grid_analysis
         layout = QVBoxLayout(g)
         self.figure = Figure()
-        self.figure.tight_layout()
         self.canvas = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
@@ -160,16 +165,22 @@ class MainWindow(Qt.QMainWindow):
         self.analysis_column = QComboBox()
         heel = QPushButton("Heel")
         trim = QPushButton("Trim")
+        heel_fixed = QPushButton("Heel \\w fixed trim")
+        trim_fixed = QPushButton("Trim \\w fixed heel")
         grid = QPushButton("Grid")
         download = QPushButton("CSV")
         buttons.layout().addWidget(self.analysis_resolution)
         buttons.layout().addWidget(self.analysis_column)
         buttons.layout().addWidget(heel)
         buttons.layout().addWidget(trim)
+        buttons.layout().addWidget(heel_fixed)
+        buttons.layout().addWidget(trim_fixed)
         buttons.layout().addWidget(grid)
         buttons.layout().addWidget(download)
         heel.clicked.connect(self.analysis_heel)
         trim.clicked.connect(self.analysis_trim)
+        heel_fixed.clicked.connect(self.analysis_heel_fixed)
+        trim_fixed.clicked.connect(self.analysis_trim_fixed)
         grid.clicked.connect(self.analysis_grid)
         download.clicked.connect(self.csv)
         self.analysis_column.currentIndexChanged.connect(self.plot_analysis)
@@ -183,8 +194,24 @@ class MainWindow(Qt.QMainWindow):
         self.w = Worker(
             analyse_trim,
             self.hydro,
-            (self.ui.trimLB.value(), self.ui.trimUB.value()),
-            self.analysis_resolution.value(),
+            solvers[self.ui.selectOptimizer.currentIndex()],
+            tol=(
+                10 ** self.ui.heelTol.value(),
+                10 ** self.ui.trimTol.value(),
+                10 ** self.ui.heightTol.value(),
+                10 ** self.ui.mxTol.value(),
+                10 ** self.ui.myTol.value(),
+                10 ** self.ui.fxTol.value(),
+            ),
+            max_iter=self.ui.maxIter.value(),
+            max_time=self.ui.maxTime.value(),
+            bounds=[
+                [self.ui.heelLB.value(), self.ui.heelUB.value()],
+                [self.ui.trimLB.value(), self.ui.trimUB.value()],
+                [self.ui.heightLB.value(), self.ui.heightUB.value()],
+            ],
+            trim=(self.ui.trimLB.value(), self.ui.trimUB.value()),
+            resolution=self.analysis_resolution.value(),
         )
         self.w.signals.result.connect(self.finished_analysis)
         self.thread_pool.start(self.w)
@@ -195,8 +222,80 @@ class MainWindow(Qt.QMainWindow):
         self.w = Worker(
             analyse_heel,
             self.hydro,
-            (self.ui.heelLB.value(), self.ui.heelUB.value()),
-            self.analysis_resolution.value(),
+            solvers[self.ui.selectOptimizer.currentIndex()],
+            tol=(
+                10 ** self.ui.heelTol.value(),
+                10 ** self.ui.trimTol.value(),
+                10 ** self.ui.heightTol.value(),
+                10 ** self.ui.mxTol.value(),
+                10 ** self.ui.myTol.value(),
+                10 ** self.ui.fxTol.value(),
+            ),
+            max_iter=self.ui.maxIter.value(),
+            max_time=self.ui.maxTime.value(),
+            bounds=[
+                [self.ui.heelLB.value(), self.ui.heelUB.value()],
+                [self.ui.trimLB.value(), self.ui.trimUB.value()],
+                [self.ui.heightLB.value(), self.ui.heightUB.value()],
+            ],
+            heel=(self.ui.heelLB.value(), self.ui.heelUB.value()),
+            resolution=self.analysis_resolution.value(),
+        )
+        self.w.signals.result.connect(self.finished_analysis)
+        self.thread_pool.start(self.w)
+        self.x_data = "heel"
+
+    def analysis_trim_fixed(self):
+        self._analysis_data = None
+        self.w = Worker(
+            analyse_trim_fixed_heel,
+            self.hydro,
+            solvers[self.ui.selectOptimizer.currentIndex()],
+            tol=(
+                10 ** self.ui.heelTol.value(),
+                10 ** self.ui.trimTol.value(),
+                10 ** self.ui.heightTol.value(),
+                10 ** self.ui.mxTol.value(),
+                10 ** self.ui.myTol.value(),
+                10 ** self.ui.fxTol.value(),
+            ),
+            max_iter=self.ui.maxIter.value(),
+            max_time=self.ui.maxTime.value(),
+            bounds=[
+                [self.ui.heelLB.value(), self.ui.heelUB.value()],
+                [self.ui.trimLB.value(), self.ui.trimUB.value()],
+                [self.ui.heightLB.value(), self.ui.heightUB.value()],
+            ],
+            trim=(self.ui.trimLB.value(), self.ui.trimUB.value()),
+            resolution=self.analysis_resolution.value(),
+        )
+        self.w.signals.result.connect(self.finished_analysis)
+        self.thread_pool.start(self.w)
+        self.x_data = "trim"
+
+    def analysis_heel_fixed(self):
+        self._analysis_data = None
+        self.w = Worker(
+            analyse_heel_fixed_trim,
+            self.hydro,
+            solvers[self.ui.selectOptimizer.currentIndex()],
+            tol=(
+                10 ** self.ui.heelTol.value(),
+                10 ** self.ui.trimTol.value(),
+                10 ** self.ui.heightTol.value(),
+                10 ** self.ui.mxTol.value(),
+                10 ** self.ui.myTol.value(),
+                10 ** self.ui.fxTol.value(),
+            ),
+            max_iter=self.ui.maxIter.value(),
+            max_time=self.ui.maxTime.value(),
+            bounds=[
+                [self.ui.heelLB.value(), self.ui.heelUB.value()],
+                [self.ui.trimLB.value(), self.ui.trimUB.value()],
+                [self.ui.heightLB.value(), self.ui.heightUB.value()],
+            ],
+            heel=(self.ui.heelLB.value(), self.ui.heelUB.value()),
+            resolution=self.analysis_resolution.value(),
         )
         self.w.signals.result.connect(self.finished_analysis)
         self.thread_pool.start(self.w)
@@ -207,9 +306,25 @@ class MainWindow(Qt.QMainWindow):
         self.w = Worker(
             grid,
             self.hydro,
-            (self.ui.heelLB.value(), self.ui.heelUB.value()),
-            (self.ui.trimLB.value(), self.ui.trimUB.value()),
-            self.analysis_resolution.value(),
+            solvers[self.ui.selectOptimizer.currentIndex()],
+            tol=(
+                10 ** self.ui.heelTol.value(),
+                10 ** self.ui.trimTol.value(),
+                10 ** self.ui.heightTol.value(),
+                10 ** self.ui.mxTol.value(),
+                10 ** self.ui.myTol.value(),
+                10 ** self.ui.fxTol.value(),
+            ),
+            max_iter=self.ui.maxIter.value(),
+            max_time=self.ui.maxTime.value(),
+            bounds=[
+                [self.ui.heelLB.value(), self.ui.heelUB.value()],
+                [self.ui.trimLB.value(), self.ui.trimUB.value()],
+                [self.ui.heightLB.value(), self.ui.heightUB.value()],
+            ],
+            heel=(self.ui.heelLB.value(), self.ui.heelUB.value()),
+            trim=(self.ui.trimLB.value(), self.ui.trimUB.value()),
+            resolution=self.analysis_resolution.value(),
         )
         self.w.signals.result.connect(self.finished_analysis)
         self.thread_pool.start(self.w)
@@ -261,6 +376,7 @@ class MainWindow(Qt.QMainWindow):
                 ax.set_ylabel(self.x_data[1])
                 ax.set_zlabel(self.analysis_column.currentText())
                 ax.scatter(x, y, z)
+                self.figure.tight_layout()
                 self.canvas.draw()
 
     def setupVtkWindow(self):

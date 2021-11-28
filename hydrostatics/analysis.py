@@ -1,12 +1,8 @@
-# print("Started")
 from typing import List
-from hydrostatics.mesh_processing import close_ends, mirror_uv
 from hydrostatics.models import BuoyancyModel
-from hydrostatics.optimize import iterative, iterative_multidimensional
 import numpy as np
-from copy import copy
 
-# print("done")
+from hydrostatics.optimize import iterative
 
 
 def get_centroid(model):
@@ -26,7 +22,17 @@ def get_centroid(model):
     return model.results.volume_centroid
 
 
-def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=20):
+def grid(
+    model: BuoyancyModel,
+    f=iterative,
+    tol=(0.001, 0.001, 0.001, 0.1, 0.1, 0.1),
+    max_iter=100,
+    max_time=100,
+    bounds=[[-360, 360], [-360, 360], [-np.Inf, np.Inf]],
+    heel=(-180, 180),
+    trim=(-180, 180),
+    resolution=20,
+):
     """Produces a grid of results for every trim and heel value
 
     Sinks the boat to force equilibrium at each iteration
@@ -43,10 +49,8 @@ def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=20):
 
     Returns
     -------
-    results_grid : list(list(Results))
-        A 2D list of Result object for every heel and trim value
-    meshgrid : np.array
-        A meshgrid for the heel and trim values
+    results_grid : list(Results)
+        A list of Result object for every heel and trim value
     """
     c = get_centroid(model)
     results: List[dict] = []
@@ -56,33 +60,130 @@ def grid(model, heel=(-180, 180), trim=(-180, 180), resolution=20):
             model.trim = t
             model.waterplane_origin = c
             model.calculate_results()
-            iterative(model, selected=(False, False, True), max_iter=1000, max_time=10)
+            f(
+                model,
+                selected=(False, False, True),
+                bounds=bounds,
+                tol=tol,
+                max_iter=max_iter,
+                max_time=max_time,
+            )
             results.append(model.results.dict())
 
     return results
 
 
-def analyse_trim(model: BuoyancyModel, trim=(-180, 180), resolution=20):
+def analyse_trim(
+    model: BuoyancyModel,
+    f=iterative,
+    tol=(0.001, 0.001, 0.001, 0.1, 0.1, 0.1),
+    max_iter=100,
+    max_time=100,
+    bounds=[[-360, 360], [-360, 360], [-np.Inf, np.Inf]],
+    trim=(-180, 180),
+    resolution=20,
+):
     c = get_centroid(model)
     results: List[dict] = []
     for t in np.linspace(trim[0], trim[1], resolution):
         model.trim = t
         model.waterplane_origin = c
         model.calculate_results()
-        iterative(model, selected=(True, False, True), max_iter=1000, max_time=10)
+        f(
+            model,
+            selected=(True, False, True),
+            bounds=bounds,
+            tol=tol,
+            max_iter=max_iter,
+            max_time=max_time,
+        )
         results.append(model.results.dict())
 
     return results
 
 
-def analyse_heel(model: BuoyancyModel, heel=(-180, 180), resolution=20):
+def analyse_trim_fixed_heel(
+    model: BuoyancyModel,
+    f=iterative,
+    tol=(0.001, 0.001, 0.001, 0.1, 0.1, 0.1),
+    max_iter=100,
+    max_time=100,
+    bounds=[[-360, 360], [-360, 360], [-np.Inf, np.Inf]],
+    trim=(-180, 180),
+    resolution=20,
+):
+    c = get_centroid(model)
+    results: List[dict] = []
+    for t in np.linspace(trim[0], trim[1], resolution):
+        model.trim = t
+        model.waterplane_origin = c
+        model.calculate_results()
+        f(
+            model,
+            selected=(False, False, True),
+            bounds=bounds,
+            tol=tol,
+            max_iter=max_iter,
+            max_time=max_time,
+        )
+        results.append(model.results.dict())
+
+    return results
+
+
+def analyse_heel(
+    model: BuoyancyModel,
+    f=iterative,
+    tol=(0.001, 0.001, 0.001, 0.1, 0.1, 0.1),
+    max_iter=100,
+    max_time=100,
+    bounds=[[-360, 360], [-360, 360], [-np.Inf, np.Inf]],
+    heel=(-180, 180),
+    resolution=20,
+):
     c = get_centroid(model)
     results: List[dict] = []
     for h in np.linspace(heel[0], heel[1], resolution):
         model.heel = h
         model.waterplane_origin = c
         model.calculate_results()
-        iterative(model, selected=(False, True, True), max_iter=1000, max_time=10)
+        f(
+            model,
+            selected=(False, True, True),
+            bounds=bounds,
+            tol=tol,
+            max_iter=max_iter,
+            max_time=max_time,
+        )
+        results.append(model.results.dict())
+
+    return results
+
+
+def analyse_heel_fixed_trim(
+    model: BuoyancyModel,
+    f=iterative,
+    tol=(0.001, 0.001, 0.001, 0.1, 0.1, 0.1),
+    max_iter=100,
+    max_time=100,
+    bounds=[[-360, 360], [-360, 360], [-np.Inf, np.Inf]],
+    heel=(-180, 180),
+    resolution=20,
+):
+    c = get_centroid(model)
+    results: List[dict] = []
+    for h in np.linspace(heel[0], heel[1], resolution):
+        model.heel = h
+        model.waterplane_origin = c
+        model.calculate_results()
+        f(
+            model,
+            selected=(False, False, True),
+            bounds=bounds,
+            tol=tol,
+            max_iter=max_iter,
+            max_time=max_time,
+        )
         results.append(model.results.dict())
 
     return results
