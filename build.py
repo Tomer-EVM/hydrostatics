@@ -7,10 +7,7 @@ except ImportError:
     def build(setup_kwargs):
         pass
 
-
 else:
-    from setuptools import Extension
-    from setuptools.dist import Distribution
     from distutils.command.build_ext import build_ext
     import numpy
 

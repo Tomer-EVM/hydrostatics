@@ -689,7 +689,7 @@
     <item row="0" column="2" rowspan="3">
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="viewerTab">
        <attribute name="title">
@@ -791,7 +791,7 @@
          <widget class="QWebEngineView" name="resultsOutput" native="true">
           <property name="url" stdset="0">
            <url>
-            <string>about:blank</string>
+            <string>file:///home/msundvick/Documents/simulator/hydrostatics/docs/build/html/index.html</string>
            </url>
           </property>
          </widget>
@@ -1359,7 +1359,7 @@
      <x>0</x>
      <y>0</y>
      <width>1404</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

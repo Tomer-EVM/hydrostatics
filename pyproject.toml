@@ -4,7 +4,7 @@ version = "1.1.0"
 description = ""
 authors = []
 build = "build.py"
-include = ["hydrostatics/gui_src/*", "docs/*"]
+include = ["hydrostatics/**/*"]
 
 [tool.poetry.scripts]
 hydro = "hydrostatics.gui:hydro"

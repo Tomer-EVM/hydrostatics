@@ -34,10 +34,8 @@ from hydrostatics.analysis import (
     grid,
 )
 import pandas as pd
-from hydrostatics.mesh_processing import Mesh, close_ends, mirror_uv, save_uv
 from hydrostatics.models import BuoyancyModel, load_hydro
 from hydrostatics.optimize import solvers
-
 logging.basicConfig(level="DEBUG")
 
 if hasattr(QtCore.Qt, "AA_EnableHighDpiScaling"):
@@ -125,6 +123,7 @@ class MainWindow(Qt.QMainWindow):
         self.initUI()
         self.setupVtkWindow()
         self.setupCallbacks()
+        self.ui.resultsOutput
 
         self.reset_globals()
 
@@ -479,18 +478,14 @@ class MainWindow(Qt.QMainWindow):
         file_path = os.path.abspath(
             os.path.join(
                 os.path.dirname(__file__),
-                "..",
-                "docs",
-                "build",
-                "html",
-                "Usage",
-                "gui_help.html",
+                "docs/html/hydrostatics/Usage/gui_help.html"
             )
         )
-        if os.path.isfile(file_path):
+        print(file_path)
+        try:
             self.ui.resultsOutput.load(Qt.QUrl.fromLocalFile(file_path))
             self.ui.resultsOutput.show()
-        else:
+        except Exception:
             self.ui.resultsOutput.setHtml(
                 r"<h1>Docs not built. Run `make html` from docs directory"
             )
@@ -1176,7 +1171,7 @@ def hydro():
 
     # Start main app
     sys.argv.append("--disable-web-security")
-    app = Qt.QApplication(sys.argv)
+    app = Qt.QApplication(sys.argv + ["--no-sandbox"])
     app.setStyle("Fusion")
     logging.info("Loading Window")
     window = MainWindow()
