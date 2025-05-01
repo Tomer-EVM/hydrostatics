@@ -16,6 +16,7 @@ dist/
 _build/
 .venv/
 target/
+.pdm-python
 
 # History
 # We really don't want these in here, they blow up the size of the repository a lot.

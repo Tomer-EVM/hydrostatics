@@ -1,5 +1,4 @@
 from hydrostatics.models import BuoyancyModel
-from hydrostatics.analysis import sink
 from hydrostatics.mesh_processing import mirror_uv, close_ends
 import numpy as np
 
