@@ -5,10 +5,10 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:1f6c6247e0f006e8ce41af392fde5bc3347a84c64daa9155b7089173ed09a1e8"
+content_hash = "sha256:b6b158e20b07aff47c81709cac901cdd66c3e0262626089c4ee090d3be94e3e6"
 
 [[metadata.targets]]
-requires_python = ">=3.7.0"
+requires_python = ">=3.7.0,<3.10"
 
 [[package]]
 name = "alabaster"
@@ -2204,7 +2204,7 @@ files = [
 
 [[package]]
 name = "pyvistaqt"
-version = "0.7.0"
+version = "0.5.0"
 requires_python = ">=3.6.*"
 summary = "pyvista qt plotter"
 groups = ["default"]
@@ -2213,8 +2213,8 @@ dependencies = [
     "pyvista>=0.25.0",
 ]
 files = [
-    {file = "pyvistaqt-0.7.0-py3-none-any.whl", hash = "sha256:42b3d3a6cb2dea7dc85d21cb27a0ccd80384633a5f79ea6012dc0e7f67995303"},
-    {file = "pyvistaqt-0.7.0.tar.gz", hash = "sha256:d7b139a6fad2b358e5592b55af83de4500d15219d93fdbfa3fc5c72f947e4091"},
+    {file = "pyvistaqt-0.5.0-py3-none-any.whl", hash = "sha256:b8006f548caddbeaa5ae82d95fa57ffff6f4b2fa20f7a1380689809097d38e85"},
+    {file = "pyvistaqt-0.5.0.tar.gz", hash = "sha256:f2358825d3c5f434760c13fdff5d3681b3cf36898e6e909c8a7934a8e6448f71"},
 ]
 
 [[package]]
